@@ -10,6 +10,7 @@ var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
+var session = require("express-session");
 
 var app = express();
 
@@ -22,22 +23,24 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+//define the session
+app.use(session({resave: true, saveUninitialized: true, secret: "ILOVEUNICORNS", cookie: {maxAge: 60000}}));
+
 //create a local storage to store the session id?
 //if user is not logged in, redirect to login page
 //if user is logged in, we can create a property & value to show that it's true
 //if not, the value is false and redirect to login
 
-var theSession = undefined;
-
 //check at every request, create a function to check if the session is true or not
-//if not redirect to the login 
+//if not redirect to the login
 
 
-app.get('/', 
+app.get('/',
 function(req, res) {
   //check if session is not undefined
-  if(theSession !== undefined){
+  if(req.session.userId !== undefined){
     res.render('index');
+    console.log('THIS IS THE REQUESTED SESSION:', req.session);
   } else {
     //redirect the user to the login
     res.redirect('/login');
@@ -45,10 +48,10 @@ function(req, res) {
 });
 
 
-app.get('/create', 
+app.get('/create',
 function(req, res) {
   //check if session is not undefined
-  if(theSession !== undefined){
+  if(req.session.userId !== undefined){
     res.render('index');
   } else {
     //redirect the user to the login
@@ -56,17 +59,23 @@ function(req, res) {
   }
 });
 
-app.get('/links', 
+app.get('/links',
 function(req, res) {
+  //check if session is not undefined
+  // if(req.session.userId !== undefined){
     Links.reset().fetch().then(function(links) {
       res.send(200, links.models);
     });
+   // } else {
+   //  //redirect the user to the login
+   //  res.redirect('/login');
+   // } 
 });
 
-app.get('/login', 
+app.get('/login',
 function(req, res) {
   //check if session is not undefined
-  if(theSession !== undefined){
+  if(req.session.userId !== undefined){
     res.render('index');
   } else {
     //redirect the user to the login
@@ -74,13 +83,13 @@ function(req, res) {
   }
 });
 
-app.get('/signup', 
+app.get('/signup',
 function(req, res) {
     //render signup page
     res.render('signup');
 });
 
-app.post('/links', 
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
@@ -117,6 +126,45 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.post('/login', function(req, res){
+  var theUser = req.body.username;
+  var thePass = req.body.password;
+
+  //go into our collection to get the model's password
+  // Users.
+
+
+  //check for username
+  var user = new User({username: theUser}).fetch().then(function(found){
+    //if the username is found
+    if (found) {
+      var hash = found.get('password');
+      console.log('THIS IS THE USER INFO', found);
+      found.compare(thePass, hash).then(function(result){
+        if(result === true){
+           //create a session object
+          req.session.userId = theUser;
+          //redirect to the homepage
+          res.redirect("/");
+        } else {
+          //if the password is not found, return an error
+          console.log('Not a valid password: ', thePass);
+          return res.send(404);
+        }
+      });
+    } else {
+      //if the username is not found
+      console.log('Not a valid password: ', thePass);
+      return res.send(404);
+    }
+  });
+});
+
+
+
+
+
+
 app.post('/signup', function(req, res){
   // console.log(req.body);
   // console.log(req.body.username);
@@ -137,14 +185,18 @@ app.post('/signup', function(req, res){
       //trigger the save here and in users.js model will trigger event 'creating' & call the hash function
       //Promise will run inside of the users.js model
       user.save().then(function(model){
-        console.log('isnside then', model); 
+        console.log('isnside then', model);
+        //bookshelf adds the model to the Users collection
         Users.add(model);
-      }).catch(function(err){if(err) console.log(err)});
 
+        //create a session object
+        req.session.userId = theUser;
+        //redirect to the homepage
+        res.redirect("/");
+
+      }).catch(function(err){if(err) console.log(err)});
     }
   });
-
-
 });
 
 

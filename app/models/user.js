@@ -22,6 +22,18 @@ var User = db.Model.extend({
         resolve(hash);
       });
     });
+  },
+  compare: function(data, hash) {
+    return new Promise(function(resolve, reject) {
+      bcrypt.compare(data, hash, function(err, result) {
+        if (err) {
+          console.log(err);
+          reject(err);
+        }
+        console.log(result);
+        resolve(result);
+      });
+    });
   }
 });
 
