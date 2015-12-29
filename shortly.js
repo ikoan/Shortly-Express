@@ -74,13 +74,8 @@ function(req, res) {
 
 app.get('/login',
 function(req, res) {
-  //check if session is not undefined
-  if(req.session.userId !== undefined){
-    res.render('index');
-  } else {
-    //redirect the user to the login
+    //render login page
     res.render('login');
-  }
 });
 
 app.get('/signup',
