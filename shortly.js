@@ -137,10 +137,14 @@ app.post('/signup', function(req, res){
       //trigger the save here and in users.js model will trigger event 'creating' & call the hash function
       //Promise will run inside of the users.js model
       user.save().then(function(model){
-        console.log(model); 
+        console.log('isnside then', model); 
+        Users.add(model);
       }).catch(function(err){if(err) console.log(err)});
+
     }
   });
+
+
 });
 
 
