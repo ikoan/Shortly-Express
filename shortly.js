@@ -102,6 +102,11 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/logout', function(req, res) {
+  req.session.userId = undefined;
+  res.redirect("/login");
+})
+
 app.post('/login', function(req, res){
   var theUser = req.body.username;
   var thePass = req.body.password;
@@ -134,11 +139,6 @@ app.post('/login', function(req, res){
     }
   });
 });
-
-
-
-
-
 
 app.post('/signup', function(req, res){
   // console.log(req.body);
