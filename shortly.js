@@ -35,41 +35,22 @@ app.use(session({resave: true, saveUninitialized: true, secret: "ILOVEUNICORNS",
 //if not redirect to the login
 
 
-app.get('/',
+app.get('/', util.checkUser,
 function(req, res) {
-  //check if session is not undefined
-  if(req.session.userId !== undefined){
     res.render('index');
-    console.log('THIS IS THE REQUESTED SESSION:', req.session);
-  } else {
-    //redirect the user to the login
-    res.redirect('/login');
-  }
 });
 
 
-app.get('/create',
+app.get('/create', util.checkUser,
 function(req, res) {
-  //check if session is not undefined
-  if(req.session.userId !== undefined){
     res.render('index');
-  } else {
-    //redirect the user to the login
-    res.redirect('/login');
-  }
 });
 
-app.get('/links',
+app.get('/links', util.checkUser,
 function(req, res) {
-  //check if session is not undefined
-  // if(req.session.userId !== undefined){
     Links.reset().fetch().then(function(links) {
       res.send(200, links.models);
     });
-   // } else {
-   //  //redirect the user to the login
-   //  res.redirect('/login');
-   // } 
 });
 
 app.get('/login',
@@ -84,7 +65,7 @@ function(req, res) {
     res.render('signup');
 });
 
-app.post('/links',
+app.post('/links', util.checkUser,
 function(req, res) {
   var uri = req.body.url;
 
@@ -128,13 +109,12 @@ app.post('/login', function(req, res){
   //go into our collection to get the model's password
   // Users.
 
-
   //check for username
   var user = new User({username: theUser}).fetch().then(function(found){
     //if the username is found
     if (found) {
       var hash = found.get('password');
-      console.log('THIS IS THE USER INFO', found);
+      // console.log('THIS IS THE USER INFO', found);
       found.compare(thePass, hash).then(function(result){
         if(result === true){
            //create a session object
@@ -143,14 +123,14 @@ app.post('/login', function(req, res){
           res.redirect("/");
         } else {
           //if the password is not found, return an error
-          console.log('Not a valid password: ', thePass);
-          return res.send(404);
+          // console.log('Not a valid password: ', thePass);
+          return res.render("login");
         }
       });
     } else {
       //if the username is not found
       console.log('Not a valid password: ', thePass);
-      return res.send(404);
+      return res.redirect("/login");
     }
   });
 });
